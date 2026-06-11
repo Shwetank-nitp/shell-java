@@ -1,30 +1,16 @@
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Scanner;
 
 public class Main {
-    private static void printCommandNotFoundErrorMessage(String command) {
-        String error = command+": command not found";
-        System.out.println(error);
-    }
-
-    private static HashMap<String, String> map = new HashMap<>();
-
-    private static void handleType(String type) {
-        if (map.containsKey(type)) {
-            System.out.println(type+" "+map.get(type));
-        } else {
-            System.out.println(type+" not found");
-        }
-    }
 
     public static void main(String[] args) throws Exception {
-        map = new HashMap<>();
-        map.put("exit", "is a shell builtin");
-        map.put("echo", "is a shell builtin");
-        map.put("type", "is a shell builtin");
 
         boolean isRunning = true;
-        
+        HashSet<String> hashSet = new HashSet<>();
+        hashSet.add("type");
+        hashSet.add("exit");
+        hashSet.add("echo");
+
         while(isRunning) {
             System.out.print("$ ");
             Scanner sc = new Scanner(System.in);
@@ -45,10 +31,10 @@ public class Main {
                 String message = sb.toString();
                 System.out.println(message);
             } else if (tokens[0].equals("type")) {
-                handleType(tokens[1]);
+                if (hashSet.contains(tokens[1])) System.out.println(tokens[1]+ " is a shell builtin");
+                else System.out.println(tokens[1] + " not found");
             }
-            // print the error message
-            else printCommandNotFoundErrorMessage(tokens[0]);
+            else System.out.println(tokens[0]+": command not found");
         }
     }
 }
