@@ -7,18 +7,30 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        // TODO: Uncomment the code below to pass the first stage
-        
         boolean isRunning = true;
         
         while(isRunning) {
             System.out.print("$ ");
             Scanner sc = new Scanner(System.in);
     
-            String command = sc.nextLine();
-            if (command.equals("exit")) isRunning = false;
+            String[] tokens = sc.nextLine().split(" "); // break the command into tokens
+
+
+            if (tokens[0].equals("exit")) isRunning = false;
+            else if (tokens[0].equals("echo")) {
+                StringBuilder sb = new StringBuilder();
+                int i = 0;
+                int n = tokens.length-1;
+
+                while (i++ < n) sb.append(tokens[i]).append(" ");
+
+                sb.deleteCharAt(sb.length()-1);
+
+                String message = sb.toString();
+                System.out.println(message);
+            }
             // print the error message
-            else printCommandNotFoundErrorMessage(command);
+            else printCommandNotFoundErrorMessage(tokens[0]);
         }
     }
 }
