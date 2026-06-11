@@ -1,3 +1,4 @@
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class Main {
@@ -6,7 +7,22 @@ public class Main {
         System.out.println(error);
     }
 
+    private static HashMap<String, String> map = new HashMap<>();
+
+    private static void handleType(String type) {
+        if (map.containsKey(type)) {
+            System.out.println(type+" "+map.get(type));
+        } else {
+            System.out.println(type+" not found");
+        }
+    }
+
     public static void main(String[] args) throws Exception {
+        map = new HashMap<>();
+        map.put("exit", "is a shell builtin");
+        map.put("echo", "is a shell builtin");
+        map.put("type", "is a shell builtin");
+
         boolean isRunning = true;
         
         while(isRunning) {
@@ -28,6 +44,8 @@ public class Main {
 
                 String message = sb.toString();
                 System.out.println(message);
+            } else if (tokens[0].equals("type")) {
+                handleType(tokens[1]);
             }
             // print the error message
             else printCommandNotFoundErrorMessage(tokens[0]);
