@@ -9,15 +9,16 @@ public class Main {
     public static void main(String[] args) throws Exception {
         // TODO: Uncomment the code below to pass the first stage
         
+        boolean isRunning = true;
         
-        while(true) {
+        while(isRunning) {
             System.out.print("$ ");
             Scanner sc = new Scanner(System.in);
     
             String command = sc.nextLine();
-    
+            if (command.equals("exit")) isRunning = false;
             // print the error message
-            printCommandNotFoundErrorMessage(command);
+            else printCommandNotFoundErrorMessage(command);
         }
     }
 }
