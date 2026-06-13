@@ -3,9 +3,7 @@ package command;
 import data.CommandContext;
 import error.CommandRuntimeException;
 import error.InvalidCommand;
-import utils.CommandResult;
 import utils.Executor;
-import writer.OutputWriter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,8 +14,14 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class ExternalCommand implements Command{
+    CommandContext context;
+
+    public ExternalCommand(CommandContext context) {
+        this.context = context;
+    }
+
     @Override
-    public CommandResult execute(OutputWriter writer, CommandContext context) throws InvalidCommand, CommandRuntimeException {
+    public String[] execute() throws InvalidCommand, CommandRuntimeException {
         if (!Executor.isExecutable(context.getCommandName())) {
             throw InvalidCommand.notFound(context.getCommandName());
         }
@@ -49,16 +53,13 @@ public class ExternalCommand implements Command{
             p.waitFor();
 
             String output = String.join("\n", outLines);
-            writer.write(output, context.getRedirectionLocations());
 
             String error = String.join("\n", errLines);
-            if (!error.isEmpty()) {
-                throw new CommandRuntimeException(error);
-            }
+
+            return new String[] {output, error, "yes"};
+
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-
-        return new CommandResult("success", true);
     }
 }

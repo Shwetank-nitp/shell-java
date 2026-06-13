@@ -9,6 +9,9 @@ public class FileOverWriter implements OutputWriter{
 
     @Override
     public void write(String output, String... fileLocations) {
+        if(output == null) {
+            output = "";
+        }
         try {
             for(String fileLoc: fileLocations) {
                 Path path = Paths.get(fileLoc);

@@ -9,12 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EchoCommand implements Command {
+    CommandContext context;
+
+    public EchoCommand(CommandContext context) {
+        this.context = context;
+    }
 
     @Override
-    public CommandResult execute(OutputWriter writer, CommandContext context) throws InvalidCommand {
+    public String[] execute() throws InvalidCommand {
         String echo = String.join(" ", context.getArgs()).trim();
-        
-        writer.write(echo, context.getRedirectionLocations());
-        return CommandResult.of(null);
+        return new String[] {echo, null, "yes"};
     }
 }

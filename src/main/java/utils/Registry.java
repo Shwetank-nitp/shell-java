@@ -3,30 +3,29 @@ package utils;
 import command.*;
 import data.CommandContext;
 import error.InvalidCommand;
-import writer.OutputWriter;
 
-import java.util.HashMap;
+import java.util.HashSet;
 
 public class Registry {
-    private final HashMap<String, Command> commandMap;
-    private final ExternalCommand exeCommand;
-    public Registry()  {
-        commandMap = new HashMap<>();
-        exeCommand = new ExternalCommand();
+    private static final HashSet<String> builtin;
+    static {
+        builtin = new HashSet<>();
 
-        commandMap.put("type", new TypeCommand(this));
-        commandMap.put("exit", new ExitCommand());
-        commandMap.put("echo", new EchoCommand());
+        builtin.add("type");
+        builtin.add("exit");
+        builtin.add("echo");
     }
 
-    public boolean isBuiltin(String command) {
-        return commandMap.containsKey(command);
+    public static boolean isBuiltin(String command) {
+        return builtin.contains(command);
     }
 
-    public CommandResult execute(OutputWriter writer, CommandContext context) throws InvalidCommand {
-        if (isBuiltin(context.getCommandName())) return commandMap.get(context.getCommandName()).execute(writer, context);
-
-        // if not a buildIn command
-        return exeCommand.execute(writer, context);
+    public static String[] execute(CommandContext context) throws InvalidCommand {
+        return switch (context.getCommandName()) {
+            case "type" -> new TypeCommand(context).execute();
+            case "exit" -> new ExitCommand(context).execute();
+            case "echo" -> new EchoCommand(context).execute();
+            default -> new ExternalCommand(context).execute();
+        };
     }
 }

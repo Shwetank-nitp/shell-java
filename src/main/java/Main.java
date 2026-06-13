@@ -1,42 +1,36 @@
 import data.CommandContext;
-import error.CommandRuntimeException;
+import pipline.Pipeline;
+import pipline.SimplePipeline;
 import utils.ArgumentParser;
 import utils.CommandResult;
-import utils.Registry;
-import writer.OutputManager;
-import writer.OutputWriter;
-import writer.SimpleOutputManager;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
-    private final static Registry registry = new Registry();
-    private final static OutputManager outputManager = new SimpleOutputManager();
 
+    // Main application
     public static void main(String[] args) throws Exception {
         boolean isRunning = true;
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         while(isRunning) {
             System.out.print("$ ");
-
             String str = br.readLine();
-            String[] tokens = ArgumentParser.getArgs(str);
-            CommandContext context = CommandContext.getContext(tokens);
-
-            final OutputWriter safeWriter = outputManager
-                    .getOutputWriter(context.getRedirectionOperator());
-            final OutputWriter error = outputManager
-                    .getErrorWriter(context.getRedirectionOperator());
 
             try {
-                CommandResult r = registry.execute(
-                        safeWriter, context
-                );
+                String[] tokens = ArgumentParser.getArgs(str);
+                CommandContext context = CommandContext.getContext(tokens);
+
+                // make a list of exception
+                List<CommandContext> contexts = new ArrayList<>();
+                contexts.add(context);
+                Pipeline pipeline = new SimplePipeline(contexts);
+
+                CommandResult r = pipeline.run();
                 isRunning = r.REPLFlag(); // Check the Read-Evaluate-Print-Loop flag
-            } catch (CommandRuntimeException ex) {
-                error.write(ex.getMessage());
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
