@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class ArgumentParser {
-    private static HashSet<Character> special;
+    private static final HashSet<Character> special;
 
     static {
         special = new HashSet<>();
