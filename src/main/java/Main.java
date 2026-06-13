@@ -1,4 +1,5 @@
 import error.InvalidCommand;
+import utils.ArgumentParser;
 import utils.CommandResult;
 import utils.Registry;
 
@@ -15,7 +16,8 @@ public class Main {
             System.out.print("$ ");
 
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            String[] tokens = br.readLine().split(" ");
+            String str = br.readLine();
+            String[] tokens = ArgumentParser.getArgs(str);
 
             try {
                 CommandResult r = registry.execute(tokens);
