@@ -6,38 +6,19 @@ import java.util.Set;
 
 public abstract class OutputManager {
     public abstract OutputWriter getOutputWriter(String operator);
+    public abstract OutputWriter getErrorWriter(String operator);
 
     private static final Set<String> REDIRECTION_TOKENS = Set.of(">", "1>", "2>", ">>", "1>>", "2>>");
-    protected final static Map<OutputManager.OUTPUT_PIPELINE, OutputWriter> outStrategy;
-    protected final static Map<String, OutputManager.OUTPUT_PIPELINE> tokenMap;
+    protected static final String APPEND1 = ">>";
+    protected static final String APPEND2 = "1>>";
+    protected static final String APPEND_ERROR = "2>>";
 
-    static {
-        outStrategy = new HashMap<>();
-        outStrategy.put(OutputManager.OUTPUT_PIPELINE.FILE_APPEND, new FileAppendWriter());
-        outStrategy.put(OutputManager.OUTPUT_PIPELINE.FILE_OVERWRITE, new FileOverWriter());
-        outStrategy.put(OutputManager.OUTPUT_PIPELINE.CONSOLE, new SimpleConsoleWriter());
+    protected static final String OVERWRITE1 = ">";
+    protected static final String OVERWRITE2 = "1>";
+    protected static final String OVERWRITE_ERROR = "2>";
 
-        tokenMap = new HashMap<>();
-
-        // Overwrite tokens
-        tokenMap.put(">", OutputManager.OUTPUT_PIPELINE.FILE_OVERWRITE);
-        tokenMap.put("1>", OutputManager.OUTPUT_PIPELINE.FILE_OVERWRITE);
-        tokenMap.put("2>", OutputManager.OUTPUT_PIPELINE.FILE_OVERWRITE);
-
-        // Append tokens
-        tokenMap.put(">>", OutputManager.OUTPUT_PIPELINE.FILE_APPEND);
-        tokenMap.put("1>>", OutputManager.OUTPUT_PIPELINE.FILE_APPEND);
-        tokenMap.put("2>>", OutputManager.OUTPUT_PIPELINE.FILE_APPEND);
-    }
-
-    // Static interface method (Available everywhere as OutputManager.isOperator("..."))
     public static boolean isOperator(String x) {
         return REDIRECTION_TOKENS.contains(x);
     }
 
-    public enum OUTPUT_PIPELINE {
-        FILE_APPEND,
-        FILE_OVERWRITE,
-        CONSOLE
-    }
 }

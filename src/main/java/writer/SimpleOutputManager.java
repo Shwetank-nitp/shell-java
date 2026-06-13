@@ -3,10 +3,19 @@ package writer;
 public class SimpleOutputManager extends OutputManager {
     @Override
     public OutputWriter getOutputWriter(String operator) {
-        if (tokenMap.containsKey(operator))
-            return outStrategy.get(tokenMap.get(operator));
+        return switch (operator) {
+            case OVERWRITE1, OVERWRITE2 -> new FileOverWriter();
+            case APPEND1, APPEND2 -> new FileAppendWriter();
+            default -> new SimpleConsoleWriter();
+        };
+    }
 
-        // send the console operator by default
-        return outStrategy.get(OUTPUT_PIPELINE.CONSOLE);
+    @Override
+    public OutputWriter getErrorWriter(String operator) {
+        return switch (operator) {
+            case OVERWRITE_ERROR -> new FileOverWriter();
+            case APPEND_ERROR -> new FileAppendWriter();
+            default -> new SimpleConsoleWriter();
+        };
     }
 }

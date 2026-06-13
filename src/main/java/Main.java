@@ -1,4 +1,5 @@
 import data.CommandContext;
+import error.CommandRuntimeException;
 import utils.ArgumentParser;
 import utils.CommandResult;
 import utils.Registry;
@@ -24,13 +25,18 @@ public class Main {
             String[] tokens = ArgumentParser.getArgs(str);
             CommandContext context = CommandContext.getContext(tokens);
 
-            try {
-                OutputWriter writer = outputManager.getOutputWriter(context.getRedirectionOperator());
+            final OutputWriter safeWriter = outputManager
+                    .getOutputWriter(context.getRedirectionOperator());
+            final OutputWriter error = outputManager
+                    .getErrorWriter(context.getRedirectionOperator());
 
+            try {
                 CommandResult r = registry.execute(
-                        writer, context
+                        safeWriter, context
                 );
                 isRunning = r.REPLFlag(); // Check the Read-Evaluate-Print-Loop flag
+            } catch (CommandRuntimeException ex) {
+                error.write(ex.getMessage());
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }

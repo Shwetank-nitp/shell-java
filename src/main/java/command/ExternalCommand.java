@@ -1,6 +1,7 @@
 package command;
 
 import data.CommandContext;
+import error.CommandRuntimeException;
 import error.InvalidCommand;
 import utils.CommandResult;
 import utils.Executor;
@@ -16,7 +17,7 @@ import java.util.stream.Stream;
 
 public class ExternalCommand implements Command{
     @Override
-    public CommandResult execute(OutputWriter writer, CommandContext context) throws InvalidCommand {
+    public CommandResult execute(OutputWriter writer, CommandContext context) throws InvalidCommand, CommandRuntimeException {
         if (!Executor.isExecutable(context.getCommandName())) {
             throw InvalidCommand.notFound(context.getCommandName());
         }
@@ -39,15 +40,21 @@ public class ExternalCommand implements Command{
                     new BufferedReader(new InputStreamReader(p.getErrorStream()));
 
             String line;
-            List<String> lines = new ArrayList<>();
-            while ((line = stdout.readLine()) != null) lines.add(line);
+            List<String> outLines = new ArrayList<>();
+            while ((line = stdout.readLine()) != null) outLines.add(line);
 
-            while ((line = stderr.readLine()) != null) System.out.println(line);
+            List<String> errLines = new ArrayList<>();
+            while ((line = stderr.readLine()) != null) errLines.add(line);
 
             p.waitFor();
 
-            String output = String.join("\n", lines);
+            String output = String.join("\n", outLines);
             writer.write(output, context.getRedirectionLocations());
+
+            String error = String.join("\n", errLines);
+            if (!error.isEmpty()) {
+                throw new CommandRuntimeException(error);
+            }
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
