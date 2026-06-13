@@ -1,4 +1,3 @@
-import error.InvalidCommand;
 import utils.ArgumentParser;
 import utils.CommandResult;
 import utils.Registry;
@@ -11,17 +10,17 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         boolean isRunning = true;
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         while(isRunning) {
             System.out.print("$ ");
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             String str = br.readLine();
             String[] tokens = ArgumentParser.getArgs(str);
 
             try {
                 CommandResult r = registry.execute(tokens);
-                isRunning = r.REPLFlag();
+                isRunning = r.REPLFlag(); // Check the Read-Evaluate-Print-Loop flag
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }

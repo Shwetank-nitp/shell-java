@@ -8,19 +8,7 @@ import java.util.regex.Pattern;
 
 public class Executor {
     public static boolean isExecutable(String program) {
-        String pathVar = System.getenv("PATH");
-
-        String[] dirs = pathVar.split(Pattern.quote(File.pathSeparator));
-
-        for(String d: dirs) {
-            Path f = Paths.get(d, program);
-            if (!Files.exists(f)) continue;
-
-            // check the executable permissions
-            if (Files.isExecutable(f)) return true;
-        }
-
-        return false;
+        return getPath(program) != null;
     }
 
     public static String getPath(String program) {
