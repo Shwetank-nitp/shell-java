@@ -14,7 +14,9 @@ public class ArgumentParser {
         while (i < n) {
             StringBuilder sb = new StringBuilder();
             while (i < n && text.charAt(i) != ' ') {
-                if (text.charAt(i) == '\'' || text.charAt(i) == '"') {
+                if (text.charAt(i) == '\\') {
+                    if (++i < n) sb.append(text.charAt(i));
+                } else if (text.charAt(i) == '\'' || text.charAt(i) == '"') {
                     char quote = text.charAt(i);
                     int k = sb.length();
 
