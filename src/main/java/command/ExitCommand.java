@@ -2,8 +2,6 @@ package command;
 
 import data.CommandContext;
 import error.InvalidCommand;
-import utils.CommandResult;
-import writer.OutputWriter;
 
 public class ExitCommand implements Command{
     CommandContext context;

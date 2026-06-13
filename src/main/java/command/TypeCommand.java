@@ -2,10 +2,8 @@ package command;
 
 import data.CommandContext;
 import error.InvalidCommand;
-import utils.CommandResult;
 import utils.Executor;
 import utils.Registry;
-import writer.OutputWriter;
 
 public class TypeCommand implements Command {
     CommandContext context;
