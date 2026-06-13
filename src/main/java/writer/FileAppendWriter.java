@@ -8,13 +8,16 @@ import java.nio.file.StandardOpenOption;
 public class FileAppendWriter implements OutputWriter {
     @Override
     public void write(String output, String... fileLocations) {
+        if (output == null) {
+            output = "";
+        }
         try {
             for (String fileLoc: fileLocations) {
                 Path p = Paths.get(fileLoc);
 
                 Files.writeString(
                         p,
-                        output,
+                        output.isEmpty() ? output : output+"\n",
                         StandardOpenOption.CREATE,
                         StandardOpenOption.APPEND
                 );

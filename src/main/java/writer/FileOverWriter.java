@@ -18,7 +18,7 @@ public class FileOverWriter implements OutputWriter{
 
                 Files.writeString(
                         path,
-                        output,
+                        output.isEmpty() ? output : output+"\n",
                         StandardOpenOption.CREATE,
                         StandardOpenOption.TRUNCATE_EXISTING
                 );
