@@ -26,8 +26,10 @@ public class ArgumentParser {
         int i = 0;
         int n = text.length();
 
+        StringBuilder sb = new StringBuilder();
+
         while (i < n) {
-            StringBuilder sb = new StringBuilder();
+            sb.setLength(0);
             while (i < n && text.charAt(i) != ' ') {
                 if (text.charAt(i) == '\\') {
                     if (++i < n) sb.append(text.charAt(i));

@@ -1,7 +1,9 @@
 package utils;
 
 import command.*;
+import data.CommandContext;
 import error.InvalidCommand;
+import writer.OutputWriter;
 
 import java.util.HashMap;
 
@@ -21,9 +23,10 @@ public class Registry {
         return commandMap.containsKey(command);
     }
 
-    public CommandResult execute(String... args) throws InvalidCommand {
-        if (isBuiltin(args[0])) return commandMap.get(args[0]).execute(args);
+    public CommandResult execute(OutputWriter writer, CommandContext context) throws InvalidCommand {
+        if (isBuiltin(context.getCommandName())) return commandMap.get(context.getCommandName()).execute(writer, context);
+
         // if not a buildIn command
-        return exeCommand.execute(args);
+        return exeCommand.execute(writer, context);
     }
 }
