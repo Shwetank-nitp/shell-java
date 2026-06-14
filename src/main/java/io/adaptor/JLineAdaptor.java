@@ -8,11 +8,12 @@ import org.jline.terminal.TerminalBuilder;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class JLineAdaptor implements IOAdapter {
     private boolean tabFlag = false;
-    private String lastBuffer = null;
+    private String lastLookupWord = ""; // Tracks changes between keypresses
     private final LineReader reader;
 
     public JLineAdaptor() throws IOException {
@@ -29,49 +30,62 @@ public class JLineAdaptor implements IOAdapter {
                 .parser(parser)
                 .build();
 
-
         Completer completer = new ShellCompleter();
 
         final Widget tabAutoCompletion = () -> {
-            String currBuffer = reader.getBuffer().toString();
-            ParsedLine parsedLine =
-                    parser.parse(currBuffer, currBuffer.length());
+            Buffer buffer = reader.getBuffer();
+            String currBuffer = buffer.toString();
+            int cursor = buffer.cursor();
+
+            // Parse context-aware using the exact cursor position
+            ParsedLine parsedLine = parser.parse(currBuffer, cursor, Parser.ParseContext.COMPLETE);
+            String currentWord = parsedLine.word();
 
             List<Candidate> candidates = new ArrayList<>();
             completer.complete(reader, parsedLine, candidates);
 
-            if (!parsedLine.word().equals(lastBuffer)) {
+            Collections.sort(candidates);
+            // Guard clause: If nothing matches, beep and reset state immediately
+            if (candidates.isEmpty()) {
                 tabFlag = false;
+                lastLookupWord = currentWord;
+                terminal.writer().write('\u0007');
+                terminal.flush();
+                return true;
             }
 
+            // If the user modified the text since the last tab, reset the state machine
+            if (!currentWord.equals(lastLookupWord)) {
+                tabFlag = false;
+            }
+            lastLookupWord = currentWord;
+
             if (!tabFlag) {
-                if (candidates.size() != 1) {
-                    tabFlag = true;
-
-                    terminal.writer().write('\u0007');
-                    terminal.writer().flush();
-                } else {
-                    tabFlag = false;
-                    // auto-complete
+                if (candidates.size() == 1) {
+                    // Perfect match: autocomplete right away
                     String candidate = candidates.getFirst().value();
-
-                    String suffix = candidate.substring(parsedLine.word().length());
-                    reader.getBuffer().write(suffix + " ");
+                    String suffix = candidate.substring(currentWord.length());
+                    buffer.write(suffix + " ");
+                    tabFlag = false;
+                } else {
+                    // Ambiguous match: beep on first tab, wait for second tab
+                    tabFlag = true;
+                    terminal.writer().write('\u0007');
+                    terminal.flush();
                 }
             } else {
+                // Second tab: display available options neatly
                 tabFlag = false;
-                if (candidates.isEmpty()) return true;
-
                 terminal.writer().println();
 
                 for (Candidate c : candidates) {
-                    terminal.writer().print(c.value());
-                    terminal.writer().print("  ");
+                    terminal.writer().print(c.value() + "  ");
                 }
 
                 terminal.writer().println();
-                terminal.writer().flush();
+                terminal.flush();
 
+                // Clean up prompt rendering layout
                 reader.callWidget(LineReader.REDRAW_LINE);
                 reader.callWidget(LineReader.REDISPLAY);
             }
@@ -84,8 +98,6 @@ public class JLineAdaptor implements IOAdapter {
                 .get(LineReader.MAIN)
                 .bind(new Reference("shell-tab"), "\t");
     }
-
-
 
     @Override
     public String ioRead() {
