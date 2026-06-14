@@ -28,4 +28,8 @@ public class Registry {
             default -> new ExternalCommand(context).execute();
         };
     }
+
+    public static String[] getBuiltin() {
+        return builtin.toArray(new String[0]);
+    }
 }

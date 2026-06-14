@@ -12,7 +12,13 @@ public class EchoCommand implements Command {
 
     @Override
     public String[] execute() throws InvalidCommand {
-        String echo = String.join(" ", context.getArgs()).trim();
-        return new String[] {echo, null, "yes"};
+        StringBuilder echo = new StringBuilder();
+
+        for(String s: context.getArgs()) {
+            echo.append(s).append(" ");
+        }
+
+        echo.setLength(echo.length()-1);
+        return new String[] {echo.toString(), null, "yes"};
     }
 }
