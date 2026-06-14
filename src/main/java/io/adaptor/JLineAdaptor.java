@@ -12,7 +12,7 @@ import java.util.List;
 
 public class JLineAdaptor implements IOAdapter {
     private boolean tabFlag = false;
-    private String lastLookupWord = "";
+    private String lastBuffer = null;
     private final LineReader reader;
 
     public JLineAdaptor() throws IOException {
@@ -29,53 +29,48 @@ public class JLineAdaptor implements IOAdapter {
                 .parser(parser)
                 .build();
 
+
         Completer completer = new ShellCompleter();
 
         final Widget tabAutoCompletion = () -> {
-            Buffer buffer = reader.getBuffer();
-            String currBuffer = buffer.toString();
-            int cursor = buffer.cursor();
-
-            ParsedLine parsedLine = parser.parse(currBuffer, cursor, Parser.ParseContext.COMPLETE);
-            String currentWord = parsedLine.word();
+            String currBuffer = reader.getBuffer().toString();
+            ParsedLine parsedLine =
+                    parser.parse(currBuffer, currBuffer.length());
 
             List<Candidate> candidates = new ArrayList<>();
             completer.complete(reader, parsedLine, candidates);
 
-            if (candidates.isEmpty()) {
-                tabFlag = false;
-                lastLookupWord = currentWord;
-                terminal.writer().write('\u0007');
-                terminal.flush();
-                return true;
-            }
-
-            if (!currentWord.equals(lastLookupWord)) {
+            if (!parsedLine.word().equals(lastBuffer)) {
                 tabFlag = false;
             }
-            lastLookupWord = currentWord;
 
             if (!tabFlag) {
-                if (candidates.size() == 1) {
-                    String candidate = candidates.getFirst().value();
-                    String suffix = candidate.substring(currentWord.length());
-                    buffer.write(suffix + " ");
-                    tabFlag = false;
-                } else {
+                if (candidates.size() != 1) {
                     tabFlag = true;
+
                     terminal.writer().write('\u0007');
-                    terminal.flush();
+                    terminal.writer().flush();
+                } else {
+                    tabFlag = false;
+                    // auto-complete
+                    String candidate = candidates.getFirst().value();
+
+                    String suffix = candidate.substring(parsedLine.word().length());
+                    reader.getBuffer().write(suffix + " ");
                 }
             } else {
                 tabFlag = false;
+                if (candidates.isEmpty()) return true;
+
                 terminal.writer().println();
 
                 for (Candidate c : candidates) {
-                    terminal.writer().print(c.value() + "  ");
+                    terminal.writer().print(c.value());
+                    terminal.writer().print("  ");
                 }
 
                 terminal.writer().println();
-                terminal.flush();
+                terminal.writer().flush();
 
                 reader.callWidget(LineReader.REDRAW_LINE);
                 reader.callWidget(LineReader.REDISPLAY);
@@ -89,6 +84,8 @@ public class JLineAdaptor implements IOAdapter {
                 .get(LineReader.MAIN)
                 .bind(new Reference("shell-tab"), "\t");
     }
+
+
 
     @Override
     public String ioRead() {
