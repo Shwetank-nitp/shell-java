@@ -1,7 +1,14 @@
 package utils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class CliTrie {
     private static class TrieNode {
@@ -17,11 +24,30 @@ public class CliTrie {
         root = new TrieNode();
 
         // build the trie with the builtin commands
-        // later i could add the path files and dir names
-
         String[] builtin = Registry.getBuiltin();
         for(String s: builtin) {
             push(s);
+        }
+
+        // now push all the executables in the PATH
+        final String path = System.getenv("PATH");
+        final String[] dirs = path.split(Pattern.quote(File.pathSeparator));
+
+        for (String d: dirs) {
+            Path dpath = Paths.get(d);
+
+            if (!Files.exists(dpath)) continue;
+
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dpath)) {
+                for (Path e: stream) {
+                    if (!Files.isExecutable(e)) continue;
+
+                    // if exists and executable then push into the DataStructure
+                    push(e.getFileName().toString());
+                }
+            }catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
