@@ -45,7 +45,7 @@ public class CliTrie {
 
         for (char c : word.toCharArray()) {
             if (curr.nodes[c] == null) {
-                return new ArrayList<>(List.of(word));
+                return new ArrayList<>();
             }
 
             curr = curr.nodes[c];
