@@ -13,104 +13,153 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class CliTrie {
+
     private static class TrieNode {
-        public boolean isFinish = false;
-        public HashMap<Character, TrieNode> nodes = new HashMap<>();
-        public String word = null;
+        public boolean isEndOfWord = false;
+        public HashMap<Character, TrieNode> children = new HashMap<>();
+        public String completeWord = null;
     }
 
-    private static final TrieNode root;
+    private static final TrieNode EXECUTABLE_TREE_ROOT;
+    private static final TrieNode FILE_SYSTEM_TREE_ROOT;
 
     static {
-        root = new TrieNode();
+        EXECUTABLE_TREE_ROOT = new TrieNode();
+        FILE_SYSTEM_TREE_ROOT = new TrieNode();
 
-        // build the trie with the builtin commands
-        String[] builtin = Registry.getBuiltin();
-        for(String s: builtin) {
-            push(s);
+        String currentDirectory = System.getProperty("user.dir");
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(currentDirectory))) {
+            for (Path filePath : stream) {
+                insert(filePath.getFileName().toString(), FILE_SYSTEM_TREE_ROOT);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to initialize file system autocomplete cache", ex);
         }
 
-        // now push all the executables in the PATH
-        final String path = System.getenv("PATH");
-        final String[] dirs = path.split(Pattern.quote(File.pathSeparator));
+        String[] builtinCommands = Registry.getBuiltin();
+        for (String command : builtinCommands) {
+            insert(command, EXECUTABLE_TREE_ROOT);
+        }
 
-        for (String d: dirs) {
-            Path dpath = Paths.get(d);
+        String environmentPath = System.getenv("PATH");
+        if (environmentPath != null) {
+            String[] pathDirectories = environmentPath.split(Pattern.quote(File.pathSeparator));
 
-            if (!Files.exists(dpath)) continue;
+            for (String directory : pathDirectories) {
+                Path dirPath = Paths.get(directory);
 
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dpath)) {
-                for (Path e: stream) {
-                    if (!Files.isExecutable(e)) continue;
-
-                    // if exists and executable then push into the DataStructure
-                    push(e.getFileName().toString());
+                if (!Files.exists(dirPath)) {
+                    continue;
                 }
-            }catch (IOException ex) {
-                throw new RuntimeException(ex);
+
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
+                    for (Path executablePath : stream) {
+                        if (Files.isExecutable(executablePath)) {
+                            insert(executablePath.getFileName().toString(), EXECUTABLE_TREE_ROOT);
+                        }
+                    }
+                } catch (IOException ex) {
+                    throw new RuntimeException("Failed to read PATH directory: " + directory, ex);
+                }
             }
         }
     }
 
-    public static void push(String word) {
-        TrieNode curr = root;
+    private static void insert(String word, TrieNode rootNode) {
+        TrieNode current = rootNode;
 
-        for (char c : word.toCharArray()) {
-            curr.nodes.computeIfAbsent(c, k -> new TrieNode());
-            curr = curr.nodes.get(c);
+        for (char ch : word.toCharArray()) {
+            current.children.computeIfAbsent(ch, k -> new TrieNode());
+            current = current.children.get(ch);
         }
 
-        curr.isFinish = true;
-        curr.word = word;
+        current.isEndOfWord = true;
+        current.completeWord = word;
     }
 
-    public static List<String> getCandidates(String word) {
-        TrieNode curr = root;
+    private static List<String> fetchSuggestions(String prefix, TrieNode rootNode) {
+        TrieNode current = rootNode;
 
-        for (char c : word.toCharArray()) {
-            if (!curr.nodes.containsKey(c)) {
+        for (char ch : prefix.toCharArray()) {
+            if (!current.children.containsKey(ch)) {
                 return new ArrayList<>();
             }
-            curr = curr.nodes.get(c);
+            current = current.children.get(ch);
         }
 
-        List<String> ans = new ArrayList<>();
-        dfs(curr, ans);
-
-        return ans;
+        List<String> suggestions = new ArrayList<>();
+        gatherAllWordsFromNode(current, suggestions);
+        return suggestions;
     }
 
-    // this return the largest common prefix and also a flag that indicate if its complete
-    public static Pair<String, Boolean> getLCP(String prefix) {
-        TrieNode curr = root;
-        StringBuilder sb = new StringBuilder();
-
-        for (char c: prefix.toCharArray()) {
-            if (!curr.nodes.containsKey(c)) return new Pair<>("", false);
-
-            sb.append(c);
-            curr = curr.nodes.get(c);
+    private static void gatherAllWordsFromNode(TrieNode node, List<String> resultList) {
+        if (node == null) return;
+        if (node.isEndOfWord) {
+            resultList.add(node.completeWord);
         }
 
-        if (curr.nodes.size() != 1) return new Pair<>("", false);
+        for (TrieNode childNode : node.children.values()) {
+            gatherAllWordsFromNode(childNode, resultList);
+        }
+    }
 
-        while (curr != null && curr.nodes.size() == 1) {
-            if (curr.isFinish) return new Pair<>(curr.word, false);
-            for (Map.Entry<Character, TrieNode> nextNode: curr.nodes.entrySet()) {
-                sb.append(nextNode.getKey());
-                curr = nextNode.getValue();
+    private static Pair<String, Boolean> computeLongestCommonPrefix(String prefix, TrieNode rootNode) {
+        TrieNode current = rootNode;
+        StringBuilder commonPrefixBuilder = new StringBuilder();
+
+        // Navigate to the end of the user's typed prefix string
+        for (char ch : prefix.toCharArray()) {
+            if (!current.children.containsKey(ch)) {
+                return new Pair<>("", false);
+            }
+            commonPrefixBuilder.append(ch);
+            current = current.children.get(ch);
+        }
+
+        // If there are multiple choices right away, we can't autocomplete further safely
+        if (current.children.size() != 1) {
+            return new Pair<>(commonPrefixBuilder.toString(), current.isEndOfWord);
+        }
+
+        // Auto-advance down the chain as long as there is exactly 1 unique path forward
+        while (current != null && current.children.size() == 1) {
+            if (current.isEndOfWord) {
+                return new Pair<>(current.completeWord, false);
+            }
+            for (Map.Entry<Character, TrieNode> nextNode : current.children.entrySet()) {
+                commonPrefixBuilder.append(nextNode.getKey());
+                current = nextNode.getValue();
             }
         }
-        if (curr != null && curr.isFinish) return new Pair<>(curr.word, curr.isFinish);
-        return new Pair<>(sb.toString(), false);
+
+        if (current != null && current.isEndOfWord) {
+            return new Pair<>(current.completeWord, true);
+        }
+
+        return new Pair<>(commonPrefixBuilder.toString(), false);
     }
 
-    private static void dfs(TrieNode node, List<String> ans) {
-        if (node == null) return;
-        if (node.isFinish) ans.add(node.word);
+    public static void insertExecutable(String command) {
+        insert(command, EXECUTABLE_TREE_ROOT);
+    }
 
-        for (TrieNode childNode : node.nodes.values()) {
-            dfs(childNode, ans);
-        }
+    public static void insertFileSystemItem(String fileName) {
+        insert(fileName, FILE_SYSTEM_TREE_ROOT);
+    }
+
+    public static List<String> findCandidatesForExecutable(String prefix) {
+        return fetchSuggestions(prefix, EXECUTABLE_TREE_ROOT);
+    }
+
+    public static List<String> findCandidatesForFileSystemItem(String prefix) {
+        return fetchSuggestions(prefix, FILE_SYSTEM_TREE_ROOT);
+    }
+
+    public static Pair<String, Boolean> getLongestCommonPrefixForExecutable(String prefix) {
+        return computeLongestCommonPrefix(prefix, EXECUTABLE_TREE_ROOT);
+    }
+
+    public static Pair<String, Boolean> getLongestCommonPrefixForFileSystemItem(String prefix) {
+        return computeLongestCommonPrefix(prefix, FILE_SYSTEM_TREE_ROOT);
     }
 }
