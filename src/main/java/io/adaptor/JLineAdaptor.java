@@ -1,5 +1,8 @@
 package io.adaptor;
 
+import io.adaptor.autocompletion.ExecutableCompleter;
+import io.adaptor.autocompletion.FileSystemCompleter;
+import io.adaptor.autocompletion.TabCompletion;
 import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;

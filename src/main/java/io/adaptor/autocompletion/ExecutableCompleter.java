@@ -1,5 +1,6 @@
-package io.adaptor;
+package io.adaptor.autocompletion;
 
+import io.adaptor.CandidateBuilder;
 import org.jline.reader.Candidate;
 import org.jline.reader.LineReader;
 import org.jline.reader.ParsedLine;

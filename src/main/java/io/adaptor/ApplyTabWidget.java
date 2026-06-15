@@ -1,5 +1,6 @@
 package io.adaptor;
 
+import io.adaptor.autocompletion.TabCompletion;
 import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
 

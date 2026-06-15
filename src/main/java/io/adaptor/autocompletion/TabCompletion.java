@@ -1,4 +1,4 @@
-package io.adaptor;
+package io.adaptor.autocompletion;
 
 import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
