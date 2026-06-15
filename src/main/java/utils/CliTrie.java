@@ -116,9 +116,10 @@ public class CliTrie {
             current = current.children.get(ch);
         }
 
-        // If there are multiple choices right away, we can't autocomplete further safely
+        // Note: this is not a BUG
+        // Returning the empty String means that you cannot further complete the string
         if (current.children.size() != 1) {
-            return new Pair<>(commonPrefixBuilder.toString(), current.isEndOfWord);
+            return new Pair<>("", false);
         }
 
         // Auto-advance down the chain as long as there is exactly 1 unique path forward
