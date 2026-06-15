@@ -30,7 +30,7 @@ public class JLineAdaptor implements IOAdapter {
                 .parser(parser)
                 .build();
 
-        Completer completer = new ShellCompleter();
+        ShellCompleter completer = new ShellCompleter();
 
         final Widget tabAutoCompletion = () -> {
             Buffer buffer = reader.getBuffer();
@@ -41,13 +41,11 @@ public class JLineAdaptor implements IOAdapter {
             ParsedLine parsedLine = parser.parse(currBuffer, cursor, Parser.ParseContext.COMPLETE);
             String currentWord = parsedLine.word();
 
-            List<Candidate> candidates = new ArrayList<>();
-            completer.complete(reader, parsedLine, candidates);
+            Candidate bestMatch = completer.getBestPrefix(reader, parsedLine);
 
-            Collections.sort(candidates);
-            // Guard clause: If nothing matches, beep and reset state immediately
-            if (candidates.isEmpty()) {
-                tabFlag = false;
+            // If candidate best match is empty ring the BELL
+            if (bestMatch.value().isEmpty() && !tabFlag) {
+                tabFlag = true;
                 lastLookupWord = currentWord;
                 terminal.writer().write('\u0007');
                 terminal.flush();
@@ -60,23 +58,17 @@ public class JLineAdaptor implements IOAdapter {
             }
             lastLookupWord = currentWord;
 
-            if (!tabFlag) {
-                if (candidates.size() == 1) {
-                    // Perfect match: autocomplete right away
-                    String candidate = candidates.getFirst().value();
-                    String suffix = candidate.substring(currentWord.length());
-                    buffer.write(suffix + " ");
-                    tabFlag = false;
-                } else {
-                    // Ambiguous match: beep on first tab, wait for second tab
-                    tabFlag = true;
-                    terminal.writer().write('\u0007');
-                    terminal.flush();
-                }
+            if (!tabFlag) {  // If first tab and a LCP is found the complete it
+                buffer.write(bestMatch.suffix() + (bestMatch.complete() ? " " : ""));
+                tabFlag = true;
             } else {
                 // Second tab: display available options neatly
                 tabFlag = false;
                 terminal.writer().println();
+
+                List<Candidate> candidates = new ArrayList<>();
+                completer.complete(reader, parsedLine, candidates);
+                Collections.sort(candidates);
 
                 for (Candidate c : candidates) {
                     terminal.writer().print(c.value() + "  ");
@@ -85,7 +77,6 @@ public class JLineAdaptor implements IOAdapter {
                 terminal.writer().println();
                 terminal.flush();
 
-                // Clean up prompt rendering layout
                 reader.callWidget(LineReader.REDRAW_LINE);
                 reader.callWidget(LineReader.REDISPLAY);
             }

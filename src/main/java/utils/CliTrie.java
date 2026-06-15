@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class CliTrie {
@@ -77,6 +78,31 @@ public class CliTrie {
         dfs(curr, ans);
 
         return ans;
+    }
+
+    // this return the largest common prefix and also a flag that indicate if its complete
+    public static Pair<String, Boolean> getLCP(String prefix) {
+        TrieNode curr = root;
+        StringBuilder sb = new StringBuilder();
+
+        for (char c: prefix.toCharArray()) {
+            if (!curr.nodes.containsKey(c)) return new Pair<>("", false);
+
+            sb.append(c);
+            curr = curr.nodes.get(c);
+        }
+
+        if (curr.nodes.size() != 1) return new Pair<>("", false);
+
+        while (curr != null && curr.nodes.size() == 1) {
+            if (curr.isFinish) return new Pair<>(curr.word, false);
+            for (Map.Entry<Character, TrieNode> nextNode: curr.nodes.entrySet()) {
+                sb.append(nextNode.getKey());
+                curr = nextNode.getValue();
+            }
+        }
+        if (curr != null && curr.isFinish) return new Pair<>(curr.word, curr.isFinish);
+        return new Pair<>(sb.toString(), false);
     }
 
     private static void dfs(TrieNode node, List<String> ans) {
