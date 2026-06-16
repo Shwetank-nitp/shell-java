@@ -7,6 +7,9 @@ import org.jline.reader.ParsedLine;
 import utils.CliTrie;
 import utils.Pair;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class FileSystemCompleter implements ShellCompleter {
@@ -38,9 +41,20 @@ public class FileSystemCompleter implements ShellCompleter {
                 ? lcp.first().substring(prefix.length())
                 : "";
 
+        String separator = "";
+
+        if (lcp.second()) {
+            if (Files.isDirectory(Paths.get(dir, lcp.first()))) {
+                separator = "/";
+            } else {
+                separator = " ";
+            }
+        }
+
         return new CandidateBuilder(dir + lcp.first())
                 .complete(lcp.second())
                 .suffix(suffix)
+                .key(separator)
                 .build();
     }
 
@@ -59,10 +73,15 @@ public class FileSystemCompleter implements ShellCompleter {
         }
 
         for (String candidateX : possibleCandidates) {
+            String separator = " ";
+            if (Files.isDirectory(Paths.get(dir, candidateX))) {
+                separator = "/";
+            }
             candidates.add(
                     new CandidateBuilder(dir + candidateX)
                             .suffix(candidateX.substring(prefix.length()))
                             .complete(true)
+                            .key(separator)
                             .build()
             );
         }

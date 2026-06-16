@@ -22,6 +22,7 @@ public class ExecutableCompleter implements ShellCompleter {
                     new CandidateBuilder(candidateX)
                             .suffix(candidateX.substring(currToken.length()))
                             .complete(true)
+                            .key(" ")
                             .build()
             );
         }
@@ -36,9 +37,15 @@ public class ExecutableCompleter implements ShellCompleter {
                 ? lcp.first().substring(currToken.length())
                 : "";
 
+        String seperator = "";
+        if (lcp.second()) {
+            seperator = " ";
+        }
+
         return new CandidateBuilder(lcp.first())
                 .complete(lcp.second())
                 .suffix(suffix)
+                .key(seperator)
                 .build();
     }
 }

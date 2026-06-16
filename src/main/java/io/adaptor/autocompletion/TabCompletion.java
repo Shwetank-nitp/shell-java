@@ -52,8 +52,8 @@ public class TabCompletion implements Widget {
         // Scenario B: First Tab Press -> Try to fill the Longest Common Prefix
         if (!isSecondTabPress) {
             String suffixToAppend = bestMatch.suffix();
-            String trailingSpace = bestMatch.complete() ? " " : "";
-            buffer.write(suffixToAppend + trailingSpace);
+            String endChar = bestMatch.key();
+            buffer.write(suffixToAppend + endChar);
 
             isSecondTabPress = true;
         }

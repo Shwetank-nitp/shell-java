@@ -120,10 +120,8 @@ public class CliTrie {
             current = current.children.get(ch);
         }
 
-        // Note: this is not a BUG
-        // Returning the empty String means that you cannot further complete the string
         if (current.children.size() != 1) {
-            return new Pair<>("", false);
+            return new Pair<>(prefix, current.isEndOfWord);
         }
 
         // Auto-advance down the chain as long as there is exactly 1 unique path forward
