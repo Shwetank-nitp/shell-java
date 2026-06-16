@@ -43,7 +43,7 @@ public class TabCompletion implements Widget {
         Candidate bestMatch = completer.getLargetCommonPrefix(parsedLine);
 
         // Scenario A: No matches found at all -> Ring terminal bell
-        if (bestMatch.value().isEmpty() && !isSecondTabPress) {
+        if (bestMatch.suffix().isEmpty() && !isSecondTabPress) {
             isSecondTabPress = true;
             triggerTerminalAlert();
             return true;

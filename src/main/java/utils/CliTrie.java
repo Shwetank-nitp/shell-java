@@ -1,5 +1,9 @@
 package utils;
 
+import cache.CacheManager;
+import cache.LruCache;
+import cache.SimpleCacheManager;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -20,21 +24,21 @@ public class CliTrie {
         public String completeWord = null;
     }
 
+    private static final int fileSystemCacheId;
+    private static final CacheManager manager;
+
+    private static final int fileSystemLimit = 50;
     private static final TrieNode EXECUTABLE_TREE_ROOT;
-    private static final TrieNode FILE_SYSTEM_TREE_ROOT;
 
     static {
-        EXECUTABLE_TREE_ROOT = new TrieNode();
-        FILE_SYSTEM_TREE_ROOT = new TrieNode();
+        manager = new SimpleCacheManager();
+        fileSystemCacheId = manager.register(
+                String.class,
+                TrieNode.class,
+                new LruCache<>(fileSystemLimit)
+        );
 
-        String currentDirectory = System.getProperty("user.dir");
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(currentDirectory))) {
-            for (Path filePath : stream) {
-                insert(filePath.getFileName().toString(), FILE_SYSTEM_TREE_ROOT);
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to initialize file system autocomplete cache", ex);
-        }
+        EXECUTABLE_TREE_ROOT = new TrieNode();
 
         String[] builtinCommands = Registry.getBuiltin();
         for (String command : builtinCommands) {
@@ -145,22 +149,64 @@ public class CliTrie {
     }
 
     public static void insertFileSystemItem(String fileName) {
-        insert(fileName, FILE_SYSTEM_TREE_ROOT);
+//        insert(fileName, FILE_SYSTEM_TREE_ROOT);
     }
 
     public static List<String> findCandidatesForExecutable(String prefix) {
         return fetchSuggestions(prefix, EXECUTABLE_TREE_ROOT);
     }
 
-    public static List<String> findCandidatesForFileSystemItem(String prefix) {
-        return fetchSuggestions(prefix, FILE_SYSTEM_TREE_ROOT);
+    public static List<String> findCandidatesForFileSystemItem(String prefix, String dir) throws InterruptedException {
+        String currentDirectory = System.getProperty("user.dir");
+        Path p = Paths.get(currentDirectory, dir);
+        String cacheKey = p.toString();
+
+        if (manager.containsKey(fileSystemCacheId, String.class, cacheKey)) {
+            TrieNode node = manager.getCache(fileSystemCacheId, String.class, TrieNode.class, cacheKey);
+            return fetchSuggestions(prefix, node);
+        }
+
+        var rootX = new TrieNode();
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
+            for (Path filePath : stream) {
+                insert(filePath.getFileName().toString(), rootX);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to initialize file system autocomplete cache", ex);
+        }
+
+        manager.putCache(fileSystemCacheId, String.class, TrieNode.class, cacheKey, rootX);
+
+        return fetchSuggestions(prefix, rootX);
     }
 
     public static Pair<String, Boolean> getLongestCommonPrefixForExecutable(String prefix) {
         return computeLongestCommonPrefix(prefix, EXECUTABLE_TREE_ROOT);
     }
 
-    public static Pair<String, Boolean> getLongestCommonPrefixForFileSystemItem(String prefix) {
-        return computeLongestCommonPrefix(prefix, FILE_SYSTEM_TREE_ROOT);
+    public static Pair<String, Boolean> getLongestCommonPrefixForFileSystemItem(String prefix, String dir) throws InterruptedException {
+        String currentDirectory = System.getProperty("user.dir");
+        Path p = Paths.get(currentDirectory, dir);
+        String cacheKey = p.toString();
+
+        if (manager.containsKey(fileSystemCacheId, String.class, cacheKey)) {
+            TrieNode node = manager.getCache(fileSystemCacheId, String.class, TrieNode.class, cacheKey);
+            return computeLongestCommonPrefix(prefix, node);
+        }
+
+        var rootX = new TrieNode();
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
+            for (Path filePath : stream) {
+                insert(filePath.getFileName().toString(), rootX);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to initialize file system autocomplete cache", ex);
+        }
+
+        manager.putCache(fileSystemCacheId, String.class, TrieNode.class, cacheKey, rootX);
+
+        return computeLongestCommonPrefix(prefix, rootX);
     }
 }
