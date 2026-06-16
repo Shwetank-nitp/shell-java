@@ -78,7 +78,7 @@ public class TabCompletion implements Widget {
 
         terminal.writer().println();
         for (Candidate candidate : candidates) {
-            terminal.writer().print(candidate.value() + "  ");
+            terminal.writer().print(candidate.value() + candidate.key()+ "   ");
         }
         terminal.writer().println();
         terminal.flush();

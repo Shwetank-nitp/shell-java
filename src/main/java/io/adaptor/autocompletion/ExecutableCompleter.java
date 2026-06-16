@@ -22,7 +22,7 @@ public class ExecutableCompleter implements ShellCompleter {
                     new CandidateBuilder(candidateX)
                             .suffix(candidateX.substring(currToken.length()))
                             .complete(true)
-                            .key(" ")
+                            .key("")
                             .build()
             );
         }

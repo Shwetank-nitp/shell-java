@@ -73,7 +73,7 @@ public class FileSystemCompleter implements ShellCompleter {
         }
 
         for (String candidateX : possibleCandidates) {
-            String separator = " ";
+            String separator = "";
             if (Files.isDirectory(Paths.get(dir, candidateX))) {
                 separator = "/";
             }
