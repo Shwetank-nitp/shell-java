@@ -14,6 +14,7 @@ public class Registry {
         builtin.add("type");
         builtin.add("exit");
         builtin.add("echo");
+        builtin.add("jobs");
     }
 
     public static boolean isBuiltin(String command) {
@@ -25,6 +26,7 @@ public class Registry {
             case "type" -> new TypeCommand(context).execute();
             case "exit" -> new ExitCommand(context).execute();
             case "echo" -> new EchoCommand(context).execute();
+            case "jobs" -> new JobsCommand(context).execute();
             default -> new ExternalCommand(context).execute();
         };
     }
