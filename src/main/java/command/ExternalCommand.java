@@ -1,6 +1,7 @@
 package command;
 
 import data.CommandContext;
+import data.ShellProcess;
 import error.CommandRuntimeException;
 import error.InvalidCommand;
 import utils.Executor;
@@ -21,7 +22,7 @@ public class ExternalCommand implements Command{
     }
 
     @Override
-    public String[] execute() throws InvalidCommand, CommandRuntimeException {
+    public ShellProcess execute() throws InvalidCommand, CommandRuntimeException {
         if (!Executor.isExecutable(context.getCommandName())) {
             throw InvalidCommand.notFound(context.getCommandName());
         }
@@ -37,6 +38,18 @@ public class ExternalCommand implements Command{
 
         try {
             Process p = pb.start();
+            if (context.isBackground()) {
+                var px = new ShellProcess(
+                        context,
+                        p.pid(),
+                        false,
+                        true
+                );
+                px.setError(null);
+                px.setOutput("[1] "+p.pid());
+                // rest of code here
+                return px;
+            }
 
             BufferedReader stdout =
                     new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -56,7 +69,11 @@ public class ExternalCommand implements Command{
 
             String error = String.join("\n", errLines);
 
-            return new String[] {output, error, "yes"};
+            ShellProcess process = new ShellProcess(context, p.pid(), true, true);
+            process.setOutput(output);
+            process.setError(error);
+
+            return process;
 
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);

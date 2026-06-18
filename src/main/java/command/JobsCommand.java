@@ -1,8 +1,12 @@
 package command;
 
 import data.CommandContext;
+import data.ShellProcess;
 import error.CommandRuntimeException;
 import error.InvalidCommand;
+import process.manager.SimpleProcessManager;
+
+import java.util.List;
 
 public class JobsCommand implements Command {
     private final CommandContext context;
@@ -12,7 +16,12 @@ public class JobsCommand implements Command {
     }
 
     @Override
-    public String[] execute() throws InvalidCommand, CommandRuntimeException {
-        return new String[]{null, null, "yes"};
+    public ShellProcess execute() throws InvalidCommand, CommandRuntimeException {
+        List<ShellProcess> runningProcess = SimpleProcessManager
+                .getInstance()
+                .getRunningProcess();
+        // do the rest later
+
+        return new ShellProcess(context, ProcessHandle.current().pid(), true, true);
     }
 }

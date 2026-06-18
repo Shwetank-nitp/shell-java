@@ -1,6 +1,7 @@
 package command;
 
 import data.CommandContext;
+import data.ShellProcess;
 import error.InvalidCommand;
 
 public class EchoCommand implements Command {
@@ -11,7 +12,7 @@ public class EchoCommand implements Command {
     }
 
     @Override
-    public String[] execute() throws InvalidCommand {
+    public ShellProcess execute() throws InvalidCommand {
         StringBuilder echo = new StringBuilder();
 
         for(String s: context.getArgs()) {
@@ -19,6 +20,9 @@ public class EchoCommand implements Command {
         }
 
         echo.setLength(echo.length()-1);
-        return new String[] {echo.toString(), null, "yes"};
+        ShellProcess p = new ShellProcess(context, ProcessHandle.current().pid(), true, true);
+        p.setOutput(echo.toString());
+
+        return p;
     }
 }

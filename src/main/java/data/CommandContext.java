@@ -10,13 +10,15 @@ public class CommandContext {
     private final String[] getArgs;
     private final String[] redirectionLocations;
     private final String redirectionOperator;
+    private final boolean isBackground;
 
     private CommandContext(String commandName, String[] getArgs,
-                          String[] redirectionLocations, String redirectionOperator) {
+                          String[] redirectionLocations, String redirectionOperator, boolean isBackground) {
         this.commandName = commandName;
         this.getArgs = getArgs;
         this.redirectionLocations = redirectionLocations;
         this.redirectionOperator = redirectionOperator;
+        this.isBackground = isBackground;
     }
 
     public static CommandContext getContext(String... args) {
@@ -46,7 +48,8 @@ public class CommandContext {
                 commandName,
                 commandArgs.toArray(new String[0]),
                 locations.toArray(new String[0]),
-                oprt
+                oprt,
+                args[args.length-1].equals("&")
         );
     }
 
@@ -55,4 +58,5 @@ public class CommandContext {
     public String[] getRedirectionLocations() { return redirectionLocations; }
     public String getRedirectionOperator() { return redirectionOperator; }
     public boolean hasRedirection() { return redirectionOperator != null; }
+    public boolean isBackground() { return isBackground; }
 }

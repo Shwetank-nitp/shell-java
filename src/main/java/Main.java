@@ -1,8 +1,8 @@
 import data.CommandContext;
 import io.adaptor.IOAdapter;
 import io.adaptor.JLineAdaptor;
-import pipline.Pipeline;
-import pipline.SimplePipeline;
+import process.manager.ProcessManager;
+import process.manager.SimpleProcessManager;
 import utils.ArgumentParser;
 import utils.CommandResult;
 
@@ -24,6 +24,7 @@ public class Main {
     // Main application
     public static void main(String[] args) throws Exception {
         boolean isRunning = true;
+        ProcessManager processManager = SimpleProcessManager.getInstance();
 
         while(isRunning) {
             String input = adapter.ioRead();
@@ -34,10 +35,11 @@ public class Main {
                 // make a list of exception
                 List<CommandContext> contexts = new ArrayList<>();
                 contexts.add(context);
-                Pipeline pipeline = new SimplePipeline(contexts);
 
-                CommandResult r = pipeline.run();
-                isRunning = r.REPLFlag(); // Check the Read-Evaluate-Print-Loop flag
+                List<CommandResult> r = processManager.run(contexts);
+                for (CommandResult result: r) {
+                    isRunning = result.REPLFlag() && isRunning; // Check the Read-Evaluate-Print-Loop flag
+                }
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }

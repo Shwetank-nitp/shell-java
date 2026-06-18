@@ -2,6 +2,7 @@ package utils;
 
 import command.*;
 import data.CommandContext;
+import data.ShellProcess;
 import error.InvalidCommand;
 
 import java.util.HashSet;
@@ -21,7 +22,7 @@ public class Registry {
         return builtin.contains(command);
     }
 
-    public static String[] execute(CommandContext context) throws InvalidCommand {
+    public static ShellProcess execute(CommandContext context) throws InvalidCommand {
         return switch (context.getCommandName()) {
             case "type" -> new TypeCommand(context).execute();
             case "exit" -> new ExitCommand(context).execute();

@@ -1,6 +1,7 @@
 package command;
 
 import data.CommandContext;
+import data.ShellProcess;
 import error.InvalidCommand;
 import utils.Executor;
 import utils.Registry;
@@ -12,7 +13,7 @@ public class TypeCommand implements Command {
     }
 
     @Override
-    public String[] execute() throws InvalidCommand {
+    public ShellProcess execute() throws InvalidCommand {
         String output;
 
         if (Registry.isBuiltin(context.getArgs()[0])) {
@@ -22,6 +23,11 @@ public class TypeCommand implements Command {
         if (output == null) {
             output = context.getArgs()[0] + ": not found";
         }
-        return new String[] {output, null, "yes"};
+
+
+        ShellProcess p = new ShellProcess(context, ProcessHandle.current().pid(), true, true);
+        p.setOutput(output);
+
+        return p;
     }
 }

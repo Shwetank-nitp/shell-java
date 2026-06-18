@@ -1,8 +1,9 @@
 package command;
 
+import data.ShellProcess;
 import error.CommandRuntimeException;
 import error.InvalidCommand;
 
 public interface Command {
-    String[] execute() throws InvalidCommand, CommandRuntimeException;
+    ShellProcess execute() throws InvalidCommand, CommandRuntimeException;
 }
