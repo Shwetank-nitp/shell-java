@@ -37,8 +37,10 @@ public class ExternalCommand implements Command{
         pb.redirectErrorStream(false);
 
         try {
-            Process p = pb.start();
             if (context.isBackground()) {
+                pb.command().removeLast();
+                Process p = pb.start();
+
                 var px = new ShellProcess(
                         context,
                         p.pid(),
@@ -51,6 +53,7 @@ public class ExternalCommand implements Command{
                 return px;
             }
 
+            Process p = pb.start();
             BufferedReader stdout =
                     new BufferedReader(new InputStreamReader(p.getInputStream()));
             BufferedReader stderr =
