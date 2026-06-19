@@ -39,6 +39,7 @@ public class ExternalCommand implements Command{
         try {
             if (context.isBackground()) {
                 pb.command().removeLast();
+                pb.inheritIO();
                 Process p = pb.start();
 
                 var px = new ShellProcess(
