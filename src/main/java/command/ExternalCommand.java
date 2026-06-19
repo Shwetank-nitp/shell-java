@@ -4,6 +4,7 @@ import data.CommandContext;
 import data.ShellProcess;
 import error.CommandRuntimeException;
 import error.InvalidCommand;
+import process.manager.SimpleProcessManager;
 import utils.Executor;
 
 import java.io.BufferedReader;
@@ -49,7 +50,10 @@ public class ExternalCommand implements Command{
                         true
                 );
                 px.setError(null);
-                px.setOutput("[1] "+p.pid());
+                int id = SimpleProcessManager
+                        .getInstance()
+                        .getRunningProcess().size()+1;
+                px.setOutput(String.format("[%d] %d", id, p.pid()));
                 // rest of code here
                 return px;
             }

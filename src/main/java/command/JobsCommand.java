@@ -26,9 +26,9 @@ public class JobsCommand implements Command {
             ShellProcess p = jobs.get(i);
 
             String marker;
-            if (i == 0) {
+            if (i == jobs.size()-1) {
                 marker = "+";
-            } else if (i == 1) {
+            } else if (i == jobs.size()-2) {
                 marker = "-";
             } else {
                 marker = "";
